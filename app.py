@@ -138,7 +138,7 @@ if(__name__=="__main__"):
     postdb.remove()
     commentdb.remove()
     tagdb.remove()
-    app.run(debug=True)
+    app.run(port=80, debug=True)
     '''
     print(userdb.insert_one({"potato": 1}))
     print(userdb.find_one({"potato":1}))
