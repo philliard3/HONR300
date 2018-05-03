@@ -1,7 +1,12 @@
+"""
+    This is the main file, where template rendering takes place.
+"""
 from flask import Flask, render_template, request, session, json, redirect, url_for, Response
 import pymongo
 import bson
 import datetime
+
+from user_calls import *
 
 # establish database
 client = pymongo.MongoClient()
@@ -20,6 +25,9 @@ app.secret_key = "change this string"
 @app.route("/home")
 @app.route("/index")
 def homepage():
+    if "username" in session:
+        return redirect(url_for("dashboard", username=session["username"]))
+
     return render_template("homepage.html")
 
 
@@ -27,41 +35,9 @@ def homepage():
 def register_page():
     return render_template("register.html")
 
-
-@app.route("/register", methods=["POST"])
-def register_action():
-
-    # create local instance of the form's response
-    form = dict(request.form)
-
-    # stop repeat usernames
-    if userdb.find_one({"username": form["username"]}):
-        return "username already in db"
-
-    # if the data is valid, insert it
-    userdb.insert_one({"username": form["username"], "password": form["password"]})
-
-    # redirect to the login page
-    return redirect(url_for('login_page'))
-
-
 @app.route("/login", methods=["GET"])
 def login_page():
     return render_template("login.html")
-
-
-@app.route("/login", methods=["POST"])
-def login_action():
-
-    # create local instance of the form's response
-    form = dict(request.form)
-
-    # conduct login if credentials are correct
-    if userdb.find_one({"username": form["username"], "password": form["password"]}):
-        return "login successful"
-
-    # otherwise redirect to the login page
-    return redirect(url_for('login_page'))
 
 
 @app.route("/post", methods=["GET"])
@@ -92,7 +68,7 @@ def get_posts():
     return "no posts found"
 
 
-@app.route("/posts/<str:post_id>", methods=["GET"])
+@app.route("/posts/<string:post_id>", methods=["GET"])
 def get_post(post_id):
 
     result = postdb.find_one({"post_id":post_id})
@@ -147,7 +123,7 @@ def get_comments():
     return "no comments found"
 
 
-@app.route("/comments/<str:comment_id>")
+@app.route("/comments/<string:comment_id>")
 def get_comment(comment_id):
     result = commentdb.find_one({"comment_id": comment_id})
 
