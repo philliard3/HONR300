@@ -28,9 +28,6 @@ def validate_password(password):
 @app.route('/login', methods=["POST"])
 def login_attempt():
 
-    if "username" in session:
-        return redirect(url_for('dashboard', username=session["username"]))
-
     form = dict(request.form)
 
     if "username" in form and "password" in form:

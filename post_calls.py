@@ -2,10 +2,9 @@ from flask import Flask, render_template, request, session, json, redirect, url_
 from app import app, userdb, postdb
 from datetime import datetime
 
+
 @app.route("/post", methods=["POST"])
 def post_attempt():
-    if "username" not in session:
-        return redirect(url_for('dashboard', username=session["username"]))
 
     form = dict(request.form)
 
@@ -16,7 +15,7 @@ def post_attempt():
         if (anonymous == "True" or anonymous == "False") and text != "":
             for c in text:
                 if ord(c) > 127:
-                    return False
+                    return 400
 
             postdb.insert_one({
                 "user_id": session["user_id"],
@@ -25,6 +24,28 @@ def post_attempt():
                 "anonymous": anonymous
             })
             return 200
+
+    return 400
+
+
+@app.route("/posts", methods=["GET"])
+def get_posts():
+
+    result = postdb.find().sort({"date_posted":-1}).limit(10)
+
+    if result:
+        return list(result)
+
+    return "no posts found"
+
+
+@app.route("/posts/<string:post_id>", methods=["GET"])
+def get_post(post_id):
+
+    result = postdb.find_one({"post_id": post_id})
+
+    if result:
+        return list(result)[0]
 
     return 400
 

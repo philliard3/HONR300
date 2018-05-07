@@ -35,6 +35,7 @@ def homepage():
 def register_page():
     return render_template("register.html")
 
+
 @app.route("/login", methods=["GET"])
 def login_page():
     return render_template("login.html")
@@ -42,98 +43,52 @@ def login_page():
 
 @app.route("/post", methods=["GET"])
 def make_post():
-    return "insert template for post creation page"
+    if "username" not in session:
+        return redirect(url_for("login_page"))
 
-
-@app.route("/post", methods=["POST"])
-def add_post():
-    form = dict(request.form)
-
-    postdb.insert_one({
-        "user_id": form["user_id"],
-        "text": form["text"],
-        "anonymous": form["anonymous"],
-        "date_posted": datetime.datetime.now()
-    })
-
-
-@app.route("/posts", methods=["GET"])
-def get_posts():
-
-    result = postdb.find().sort({"date_posted":-1})
-
-    if(result):
-        return result[:10]
-
-    return "no posts found"
-
-
-@app.route("/posts/<string:post_id>", methods=["GET"])
-def get_post(post_id):
-
-    result = postdb.find_one({"post_id":post_id})
-
-    if(result):
-        return result
-
-    return 400
+    return render_template("post.html")
 
 
 @app.route("/tag", methods=["GET"])
 def make_tag():
-    return "insert template for making tag"
+    if "username" not in session:
+        return redirect(url_for("login_page"))
 
-
-@app.route("/tag", methods=["POST"])
-def add_tag():
-    form = dict(request.form)
-
-    tagdb.insert_one({
-        "user_id": form["user_id"],
-        "post_id": form["post_id"],
-        "text": form["text"],
-        "date_posted": datetime.datetime.now()
-    })
+    return render_template("tag.html")
 
 
 @app.route("/comment", methods=["GET"])
 def make_comment():
-    return "insert template for comment creation page"
+    return render_template("comment.html")
 
 
-@app.route("/comment", methods=["POST"])
-def add_comment():
-    form = dict(request.form)
+@app.route("/dashboard", methods=["GET"])
+def dashboard():
+    if "username" not in session:
+        return redirect(url_for("login_page"))
 
-    commentdb.insert_one({
-        "user_id": form["user_id"],
-        "post_id": form["post_id"],
-        "text": form["text"],
-        "date_posted": datetime.datetime.now()
-    })
+    # get the most recent 10 posts
+    posts = []
+    result = postdb.find().limit(10).sort({"date_posted":-1})
+    if result:
+        for post in result:
+            post_entry = {
+                "post": post,
+                "tags": list(tagdb.find({"post_id": post["id"]}).limit(10)),
+                "comments": list(commentdb.find({"post_id": post["id"]}).limit(10))
+            }
+            # add in tags for those comments
+            if post_entry["comments"]:
+                for comment in post_entry["comments"]:
+                    result = tagdb.find({"comment_id": comment["id"]}).limit(10)
+                    if result:
+                        post_entry["tags"] += list(result)
+            posts.append(post_entry)
 
-
-@app.route("/comments", methods=["GET"])
-def get_comments():
-    result = commentdb.find().sort({"date_posted":-1})
-
-    if(result):
-        return result[:10]
-
-    return "no comments found"
-
-
-@app.route("/comments/<string:comment_id>")
-def get_comment(comment_id):
-    result = commentdb.find_one({"comment_id": comment_id})
-
-    if (result):
-        return result
-
-    return 400
+    return render_template("dashboard.html", posts=posts)
 
 
-if(__name__=="__main__"):
+if __name__ == "__main__":
     userdb.remove()
     postdb.remove()
     commentdb.remove()
