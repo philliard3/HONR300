@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HONR 300 Dashboard</title>
+</head>
+<body>
+{% for post in posts %}
+    <div id="{{post['id']}}">
+        <div>
+            {{post['text']}}
+        </div>
+        <div>
+            {% for tag in post['tags'] %}
+                {% if 'post_id' in tag %}
+                    <span>tag['text'></span>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <p>
+            <button>tag this post</button>
+        </p>
+        <p>
+            <button>reply to this post</button>
+        </p>
+        <div>
+            {% for comment in post['comments'] %}
+                <div id="{{comment['id']}}">
+                    {{comment['text']}}
+                    <div>
+                    {% for tag in post['tags'] %}
+                        {% if 'comment_id' in tag and tag['comment_id']==comment['id'] %}
+                            <span>tag['text']</span>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+                    <p>
+                        <button>tag this comment</button>
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endfor %}
+</body>
+</html>
